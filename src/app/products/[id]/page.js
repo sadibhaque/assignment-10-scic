@@ -2,6 +2,9 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
+import { Button } from "../../../components/ui/button";
+import { Badge } from "../../../components/ui/badge";
+import { Card, CardContent } from "../../../components/ui/card";
 
 async function getProduct(id) {
     const res = await fetch(
@@ -45,16 +48,16 @@ export default async function ProductDetail({ params }) {
     }
 
     return (
-        <div className="min-h-screen flex flex-col">
+        <div className="min-h-screen flex flex-col bg-background">
             <Navbar />
 
             <main className="flex-1 py-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Breadcrumb */}
                     <nav className="mb-8">
-                        <ol className="flex items-center space-x-2 text-sm text-gray-500">
+                        <ol className="flex items-center space-x-2 text-sm text-muted-foreground">
                             <li>
-                                <Link href="/" className="hover:text-gray-700">
+                                <Link href="/" className="hover:text-foreground transition-colors">
                                     Home
                                 </Link>
                             </li>
@@ -62,13 +65,13 @@ export default async function ProductDetail({ params }) {
                             <li>
                                 <Link
                                     href="/products"
-                                    className="hover:text-gray-700"
+                                    className="hover:text-foreground transition-colors"
                                 >
                                     Products
                                 </Link>
                             </li>
                             <li>/</li>
-                            <li className="text-gray-800 font-medium">
+                            <li className="text-foreground font-medium">
                                 {product.name}
                             </li>
                         </ol>
@@ -76,8 +79,8 @@ export default async function ProductDetail({ params }) {
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                         {/* Product Image */}
-                        <div className="aspect-square bg-gray-200 rounded-lg flex items-center justify-center">
-                            <span className="text-gray-500 text-lg">
+                        <div className="aspect-square bg-muted rounded-lg border flex items-center justify-center">
+                            <span className="text-muted-foreground text-lg">
                                 Product Image
                             </span>
                         </div>
@@ -85,30 +88,30 @@ export default async function ProductDetail({ params }) {
                         {/* Product Information */}
                         <div className="space-y-6">
                             <div>
-                                <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                                <h1 className="text-3xl font-bold text-foreground mb-2">
                                     {product.name}
                                 </h1>
-                                <p className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full inline-block">
+                                <Badge variant="secondary" className="text-sm">
                                     {product.category}
-                                </p>
+                                </Badge>
                             </div>
 
-                            <div className="text-4xl font-bold text-blue-600">
+                            <div className="text-4xl font-bold text-foreground">
                                 ${product.price}
                             </div>
 
                             <div>
-                                <h2 className="text-lg font-semibold text-gray-800 mb-3">
+                                <h2 className="text-lg font-semibold text-foreground mb-3">
                                     Description
                                 </h2>
-                                <p className="text-gray-600 leading-relaxed">
+                                <p className="text-muted-foreground leading-relaxed">
                                     {product.description}
                                 </p>
                             </div>
 
                             {product.features && (
                                 <div>
-                                    <h2 className="text-lg font-semibold text-gray-800 mb-3">
+                                    <h2 className="text-lg font-semibold text-foreground mb-3">
                                         Key Features
                                     </h2>
                                     <ul className="space-y-2">
@@ -116,10 +119,10 @@ export default async function ProductDetail({ params }) {
                                             (feature, index) => (
                                                 <li
                                                     key={index}
-                                                    className="flex items-center text-gray-600"
+                                                    className="flex items-center text-muted-foreground"
                                                 >
                                                     <svg
-                                                        className="w-5 h-5 text-green-500 mr-2"
+                                                        className="w-5 h-5 text-primary mr-2"
                                                         fill="currentColor"
                                                         viewBox="0 0 20 20"
                                                     >
@@ -138,59 +141,65 @@ export default async function ProductDetail({ params }) {
                             )}
 
                             <div className="space-y-4">
-                                <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+                                <Button className="w-full" size="lg">
                                     Add to Cart
-                                </button>
-                                <button className="w-full border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-colors">
+                                </Button>
+                                <Button variant="outline" className="w-full" size="lg">
                                     Add to Wishlist
-                                </button>
+                                </Button>
                             </div>
 
-                            <div className="border-t pt-6">
-                                <h3 className="text-sm font-semibold text-gray-800 mb-3">
-                                    Product Information
-                                </h3>
-                                <div className="space-y-2 text-sm text-gray-600">
-                                    <div className="flex justify-between">
-                                        <span>Product ID:</span>
-                                        <span>{product.id}</span>
+                            <Card>
+                                <CardContent className="pt-6">
+                                    <h3 className="text-sm font-semibold text-foreground mb-3">
+                                        Product Information
+                                    </h3>
+                                    <div className="space-y-2 text-sm text-muted-foreground">
+                                        <div className="flex justify-between">
+                                            <span>Product ID:</span>
+                                            <span>{product.id}</span>
+                                        </div>
+                                        <div className="h-px bg-border my-2" />
+                                        <div className="flex justify-between">
+                                            <span>Category:</span>
+                                            <span>{product.category}</span>
+                                        </div>
+                                        <div className="h-px bg-border my-2" />
+                                        <div className="flex justify-between">
+                                            <span>Availability:</span>
+                                            <Badge variant="default" className="text-xs">
+                                                In Stock
+                                            </Badge>
+                                        </div>
                                     </div>
-                                    <div className="flex justify-between">
-                                        <span>Category:</span>
-                                        <span>{product.category}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span>Availability:</span>
-                                        <span className="text-green-600">
-                                            In Stock
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
+                                </CardContent>
+                            </Card>
                         </div>
                     </div>
 
                     {/* Back to Products */}
                     <div className="mt-12">
-                        <Link
-                            href="/products"
-                            className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
-                        >
-                            <svg
-                                className="w-4 h-4 mr-2"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                        <Button variant="ghost" asChild>
+                            <Link
+                                href="/products"
+                                className="inline-flex items-center"
                             >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M15 19l-7-7 7-7"
-                                />
-                            </svg>
-                            Back to Products
-                        </Link>
+                                <svg
+                                    className="w-4 h-4 mr-2"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M15 19l-7-7 7-7"
+                                    />
+                                </svg>
+                                Back to Products
+                            </Link>
+                        </Button>
                     </div>
                 </div>
             </main>
