@@ -1,59 +1,56 @@
-// Mock products data
-let products = [
-    {
-        id: "1",
-        name: "Wireless Bluetooth Headphones",
-        description:
-            "High-quality wireless headphones with noise cancellation and 30-hour battery life.",
-        price: 199.99,
-        image: "/placeholder-product.jpg",
-        category: "Electronics",
-    },
-    {
-        id: "2",
-        name: "Smart Fitness Watch",
-        description:
-            "Advanced fitness tracker with heart rate monitoring and GPS functionality.",
-        price: 299.99,
-        image: "/placeholder-product.jpg",
-        category: "Wearables",
-    },
-    {
-        id: "3",
-        name: "Organic Coffee Beans",
-        description:
-            "Premium organic coffee beans sourced from sustainable farms.",
-        price: 24.99,
-        image: "/placeholder-product.jpg",
-        category: "Food & Beverage",
-    },
-    {
-        id: "4",
-        name: "Laptop Stand",
-        description:
-            "Ergonomic aluminum laptop stand with adjustable height and angle.",
-        price: 79.99,
-        image: "/placeholder-product.jpg",
-        category: "Accessories",
-    },
-];
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/[...nextauth]/route";
+import connectDB from "../../../lib/mongodb";
+import Product from "../../../models/Product";
 
 export async function GET() {
-    return Response.json(products);
+    try {
+        await connectDB();
+        const products = await Product.find({}).populate('createdBy', 'name email').sort({ createdAt: -1 });
+        return NextResponse.json(products);
+    } catch (error) {
+        console.error("Error fetching products:", error);
+        return NextResponse.json({ error: "Failed to fetch products" }, { status: 500 });
+    }
 }
 
 export async function POST(request) {
     try {
-        const body = await request.json();
-        const newProduct = {
-            id: (products.length + 1).toString(),
-            ...body,
-            image: "/placeholder-product.jpg",
-        };
+        const session = await getServerSession(authOptions);
+        if (!session) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
 
-        products.push(newProduct);
-        return Response.json(newProduct, { status: 201 });
+        await connectDB();
+        const body = await request.json();
+        const { name, description, price, category, image, stock, featured } = body;
+
+        // Validate required fields
+        if (!name || !description || !price || !category || !image) {
+            return NextResponse.json(
+                { error: "Missing required fields" },
+                { status: 400 }
+            );
+        }
+
+        // Create new product
+        const product = await Product.create({
+            name,
+            description,
+            price: parseFloat(price),
+            category,
+            image,
+            stock: parseInt(stock) || 0,
+            featured: Boolean(featured),
+            createdBy: session.user.id,
+        });
+
+        await product.populate('createdBy', 'name email');
+        
+        return NextResponse.json(product, { status: 201 });
     } catch (error) {
-        return Response.json({ error: "Invalid request" }, { status: 400 });
+        console.error("Error creating product:", error);
+        return NextResponse.json({ error: "Failed to create product" }, { status: 500 });
     }
 }

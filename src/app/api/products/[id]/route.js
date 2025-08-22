@@ -1,78 +1,117 @@
-import { products } from "../route.js";
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../../auth/[...nextauth]/route";
+import connectDB from "../../../../lib/mongodb";
+import Product from "../../../../models/Product";
+import mongoose from "mongoose";
 
 // Get product by ID
 export async function GET(request, { params }) {
-    const { id } = await params;
+    try {
+        const { id } = await params;
 
-    // Mock products data (same as in route.js)
-    const mockProducts = [
-        {
-            id: "1",
-            name: "Wireless Bluetooth Headphones",
-            description:
-                "High-quality wireless headphones with noise cancellation and 30-hour battery life. Perfect for music lovers and professionals who need clear audio quality.",
-            price: 199.99,
-            image: "/placeholder-product.jpg",
-            category: "Electronics",
-            features: [
-                "Noise Cancellation",
-                "30-hour battery",
-                "Bluetooth 5.0",
-                "Quick charge",
-            ],
-        },
-        {
-            id: "2",
-            name: "Smart Fitness Watch",
-            description:
-                "Advanced fitness tracker with heart rate monitoring and GPS functionality. Track your workouts and health metrics with precision.",
-            price: 299.99,
-            image: "/placeholder-product.jpg",
-            category: "Wearables",
-            features: [
-                "Heart Rate Monitor",
-                "GPS Tracking",
-                "Sleep Monitoring",
-                "Water Resistant",
-            ],
-        },
-        {
-            id: "3",
-            name: "Organic Coffee Beans",
-            description:
-                "Premium organic coffee beans sourced from sustainable farms. Rich flavor profile with hints of chocolate and caramel.",
-            price: 24.99,
-            image: "/placeholder-product.jpg",
-            category: "Food & Beverage",
-            features: [
-                "Organic Certified",
-                "Fair Trade",
-                "Single Origin",
-                "Dark Roast",
-            ],
-        },
-        {
-            id: "4",
-            name: "Laptop Stand",
-            description:
-                "Ergonomic aluminum laptop stand with adjustable height and angle. Improve your posture and workspace comfort.",
-            price: 79.99,
-            image: "/placeholder-product.jpg",
-            category: "Accessories",
-            features: [
-                "Adjustable Height",
-                "Aluminum Build",
-                "Heat Dissipation",
-                "Portable Design",
-            ],
-        },
-    ];
+        // Validate MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return NextResponse.json({ error: "Invalid product ID" }, { status: 400 });
+        }
 
-    const product = mockProducts.find((p) => p.id === id);
+        await connectDB();
+        const product = await Product.findById(id).populate('createdBy', 'name email');
+        
+        if (!product) {
+            return NextResponse.json({ error: "Product not found" }, { status: 404 });
+        }
 
-    if (!product) {
-        return Response.json({ error: "Product not found" }, { status: 404 });
+        return NextResponse.json(product);
+    } catch (error) {
+        console.error("Error fetching product:", error);
+        return NextResponse.json({ error: "Failed to fetch product" }, { status: 500 });
     }
+}
 
-    return Response.json(product);
+// Update product by ID
+export async function PUT(request, { params }) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const { id } = await params;
+        
+        // Validate MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return NextResponse.json({ error: "Invalid product ID" }, { status: 400 });
+        }
+
+        await connectDB();
+        const body = await request.json();
+        const { name, description, price, category, image, stock, featured } = body;
+
+        // Check if product exists and user owns it
+        const existingProduct = await Product.findById(id);
+        if (!existingProduct) {
+            return NextResponse.json({ error: "Product not found" }, { status: 404 });
+        }
+
+        if (existingProduct.createdBy.toString() !== session.user.id) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
+        // Update product
+        const updatedProduct = await Product.findByIdAndUpdate(
+            id,
+            {
+                name,
+                description,
+                price: parseFloat(price),
+                category,
+                image,
+                stock: parseInt(stock) || 0,
+                featured: Boolean(featured),
+            },
+            { new: true, runValidators: true }
+        ).populate('createdBy', 'name email');
+
+        return NextResponse.json(updatedProduct);
+    } catch (error) {
+        console.error("Error updating product:", error);
+        return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
+    }
+}
+
+// Delete product by ID
+export async function DELETE(request, { params }) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const { id } = await params;
+        
+        // Validate MongoDB ObjectId
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return NextResponse.json({ error: "Invalid product ID" }, { status: 400 });
+        }
+
+        await connectDB();
+
+        // Check if product exists and user owns it
+        const product = await Product.findById(id);
+        if (!product) {
+            return NextResponse.json({ error: "Product not found" }, { status: 404 });
+        }
+
+        if (product.createdBy.toString() !== session.user.id) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
+        await Product.findByIdAndDelete(id);
+        
+        return NextResponse.json({ message: "Product deleted successfully" });
+    } catch (error) {
+        console.error("Error deleting product:", error);
+        return NextResponse.json({ error: "Failed to delete product" }, { status: 500 });
+    }
 }

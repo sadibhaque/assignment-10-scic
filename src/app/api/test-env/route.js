@@ -4,6 +4,7 @@ export async function GET() {
         nextauthSecret: process.env.NEXTAUTH_SECRET ? "set" : "not set",
         googleClientId: process.env.GOOGLE_CLIENT_ID ? "set" : "not set",
         googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ? "set" : "not set",
+        mongodbUri: process.env.MONGODB_URI ? "set" : "not set",
         nodeEnv: process.env.NODE_ENV || "not set",
     });
 }
