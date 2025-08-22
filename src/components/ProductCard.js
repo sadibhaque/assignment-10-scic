@@ -4,29 +4,36 @@ import Link from "next/link";
 import { Card, CardContent, CardFooter } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
+import Image from "next/image";
 
 export default function ProductCard({ product }) {
     return (
-        <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-            <div className="h-48 bg-muted flex items-center justify-center">
-                <span className="text-muted-foreground">Product Image</span>
-            </div>
+        <Card className="overflow-hidden hover:shadow-lg pt-0 transition-shadow">
+            <Image
+                width={300}
+                height={300}
+                src={product.image}
+                alt={product.name}
+                className="w-full p-0"
+                placeholder="blur"
+                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+            />
 
-            <CardContent className="p-6">
+            <CardContent className="px-6 py-0">
                 <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-lg font-semibold text-foreground line-clamp-1">
+                    <h3 className="text-md font-semibold text-foreground line-clamp-1">
                         {product.name}
                     </h3>
-                    <Badge variant="secondary" className="text-xs">
-                        {product.category}
-                    </Badge>
                 </div>
-                <p className="text-muted-foreground text-sm mb-3 line-clamp-2">
+                <Badge variant="secondary" className="text-xs mb-2 px-0">
+                    {product.category}
+                </Badge>
+                <p className="text-muted-foreground text-sm line-clamp-2">
                     {product.description}
                 </p>
             </CardContent>
 
-            <CardFooter className="flex justify-between items-center p-6 pt-0">
+            <CardFooter className="flex justify-between items-center px-6 pt-0">
                 <span className="text-2xl font-bold text-foreground">
                     ${product.price}
                 </span>

@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Navbar from "../../../components/Navbar";
@@ -5,46 +8,112 @@ import Footer from "../../../components/Footer";
 import { Button } from "../../../components/ui/button";
 import { Badge } from "../../../components/ui/badge";
 import { Card, CardContent } from "../../../components/ui/card";
+import Image from "next/image";
+import LoadingSpinner from "../../../components/LoadingSpinner";
+import productsService from "../../../lib/productsService";
 
-async function getProduct(id) {
-    const res = await fetch(
-        `${
-            process.env.NEXTAUTH_URL || "http://localhost:3000"
-        }/api/products/${id}`,
-        {
-            cache: "no-store",
-        }
-    );
+// Generate product features based on category
+function getProductFeatures(product) {
+    const baseFeatures = ["High Quality", "Fast Delivery", "1 Year Warranty"];
 
-    if (!res.ok) {
-        return null;
+    switch (product.category) {
+        case "Electronics":
+            return [...baseFeatures, "Latest Technology", "Energy Efficient"];
+        case "Wearables":
+            return [...baseFeatures, "Waterproof", "Long Battery Life"];
+        case "Food & Beverage":
+            return [...baseFeatures, "Organic", "Fresh"];
+        case "Accessories":
+            return [...baseFeatures, "Durable Material", "Ergonomic Design"];
+        default:
+            return baseFeatures;
     }
-
-    return res.json();
 }
 
-export async function generateMetadata({ params }) {
-    const { id } = await params;
-    const product = await getProduct(id);
+export default function ProductDetail({ params }) {
+    const [product, setProduct] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [id, setId] = useState(null);
 
-    if (!product) {
-        return {
-            title: "Product Not Found - MyStore",
+    useEffect(() => {
+        const getParams = async () => {
+            const resolvedParams = await params;
+            setId(resolvedParams.id);
         };
+        getParams();
+    }, [params]);
+
+    useEffect(() => {
+        if (!id) return;
+
+        const loadProduct = () => {
+            try {
+                // Get product directly from localStorage
+                const foundProduct = productsService.getProduct(id);
+
+                if (foundProduct) {
+                    // Add features for better display
+                    const productWithFeatures = {
+                        ...foundProduct,
+                        features: getProductFeatures(foundProduct),
+                    };
+                    setProduct(productWithFeatures);
+                } else {
+                    setProduct(null);
+                }
+            } catch (error) {
+                console.error("Error loading product:", error);
+                setProduct(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadProduct();
+    }, [id]);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-background">
+                <Navbar />
+                <div className="container mx-auto px-4 py-8">
+                    <LoadingSpinner />
+                </div>
+                <Footer />
+            </div>
+        );
     }
 
-    return {
-        title: `${product.name} - MyStore`,
-        description: product.description,
-    };
-}
-
-export default async function ProductDetail({ params }) {
-    const { id } = await params;
-    const product = await getProduct(id);
-
     if (!product) {
-        notFound();
+        return (
+            <div className="min-h-screen bg-background">
+                <Navbar />
+                <div className="container mx-auto px-4 py-8">
+                    <Card className="max-w-md mx-auto text-center">
+                        <CardContent className="p-8">
+                            <h1 className="text-2xl font-bold text-foreground mb-4">
+                                404 - Product Not Found
+                            </h1>
+                            <p className="text-muted-foreground mb-6">
+                                The product you are looking for doesn&apos;t
+                                exist or has been moved.
+                            </p>
+                            <div className="space-x-4">
+                                <Button asChild>
+                                    <Link href="/">Go Home</Link>
+                                </Button>
+                                <Button asChild variant="outline">
+                                    <Link href="/products">
+                                        Browse Products
+                                    </Link>
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+                <Footer />
+            </div>
+        );
     }
 
     return (
@@ -57,7 +126,10 @@ export default async function ProductDetail({ params }) {
                     <nav className="mb-8">
                         <ol className="flex items-center space-x-2 text-sm text-muted-foreground">
                             <li>
-                                <Link href="/" className="hover:text-foreground transition-colors">
+                                <Link
+                                    href="/"
+                                    className="hover:text-foreground transition-colors"
+                                >
                                     Home
                                 </Link>
                             </li>
@@ -79,10 +151,24 @@ export default async function ProductDetail({ params }) {
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                         {/* Product Image */}
-                        <div className="aspect-square bg-muted rounded-lg border flex items-center justify-center">
-                            <span className="text-muted-foreground text-lg">
-                                Product Image
-                            </span>
+                        <div className="aspect-square bg-muted rounded-lg border overflow-hidden">
+                            {product.image ? (
+                                <Image
+                                    width={500}
+                                    height={500}
+                                    src={product.image}
+                                    alt={product.name}
+                                    className="object-cover w-full h-full"
+                                    placeholder="blur"
+                                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                    <span className="text-muted-foreground text-lg">
+                                        No Image Available
+                                    </span>
+                                </div>
+                            )}
                         </div>
 
                         {/* Product Information */}
@@ -109,46 +195,6 @@ export default async function ProductDetail({ params }) {
                                 </p>
                             </div>
 
-                            {product.features && (
-                                <div>
-                                    <h2 className="text-lg font-semibold text-foreground mb-3">
-                                        Key Features
-                                    </h2>
-                                    <ul className="space-y-2">
-                                        {product.features.map(
-                                            (feature, index) => (
-                                                <li
-                                                    key={index}
-                                                    className="flex items-center text-muted-foreground"
-                                                >
-                                                    <svg
-                                                        className="w-5 h-5 text-primary mr-2"
-                                                        fill="currentColor"
-                                                        viewBox="0 0 20 20"
-                                                    >
-                                                        <path
-                                                            fillRule="evenodd"
-                                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                                            clipRule="evenodd"
-                                                        />
-                                                    </svg>
-                                                    {feature}
-                                                </li>
-                                            )
-                                        )}
-                                    </ul>
-                                </div>
-                            )}
-
-                            <div className="space-y-4">
-                                <Button className="w-full" size="lg">
-                                    Add to Cart
-                                </Button>
-                                <Button variant="outline" className="w-full" size="lg">
-                                    Add to Wishlist
-                                </Button>
-                            </div>
-
                             <Card>
                                 <CardContent className="pt-6">
                                     <h3 className="text-sm font-semibold text-foreground mb-3">
@@ -167,13 +213,29 @@ export default async function ProductDetail({ params }) {
                                         <div className="h-px bg-border my-2" />
                                         <div className="flex justify-between">
                                             <span>Availability:</span>
-                                            <Badge variant="default" className="text-xs">
+                                            <Badge
+                                                variant="default"
+                                                className="text-xs"
+                                            >
                                                 In Stock
                                             </Badge>
                                         </div>
                                     </div>
                                 </CardContent>
                             </Card>
+
+                            <div className="space-y-4">
+                                <Button className="w-full" size="lg">
+                                    Add to Cart
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="w-full"
+                                    size="lg"
+                                >
+                                    Add to Wishlist
+                                </Button>
+                            </div>
                         </div>
                     </div>
 

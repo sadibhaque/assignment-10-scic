@@ -1,78 +1,57 @@
-import { products } from "../route.js";
+import productsService from "../../../../lib/productsService";
 
 // Get product by ID
 export async function GET(request, { params }) {
-    const { id } = await params;
+    try {
+        const { id } = await params;
 
-    // Mock products data (same as in route.js)
-    const mockProducts = [
-        {
-            id: "1",
-            name: "Wireless Bluetooth Headphones",
-            description:
-                "High-quality wireless headphones with noise cancellation and 30-hour battery life. Perfect for music lovers and professionals who need clear audio quality.",
-            price: 199.99,
-            image: "/placeholder-product.jpg",
-            category: "Electronics",
-            features: [
-                "Noise Cancellation",
-                "30-hour battery",
-                "Bluetooth 5.0",
-                "Quick charge",
-            ],
-        },
-        {
-            id: "2",
-            name: "Smart Fitness Watch",
-            description:
-                "Advanced fitness tracker with heart rate monitoring and GPS functionality. Track your workouts and health metrics with precision.",
-            price: 299.99,
-            image: "/placeholder-product.jpg",
-            category: "Wearables",
-            features: [
-                "Heart Rate Monitor",
-                "GPS Tracking",
-                "Sleep Monitoring",
-                "Water Resistant",
-            ],
-        },
-        {
-            id: "3",
-            name: "Organic Coffee Beans",
-            description:
-                "Premium organic coffee beans sourced from sustainable farms. Rich flavor profile with hints of chocolate and caramel.",
-            price: 24.99,
-            image: "/placeholder-product.jpg",
-            category: "Food & Beverage",
-            features: [
-                "Organic Certified",
-                "Fair Trade",
-                "Single Origin",
-                "Dark Roast",
-            ],
-        },
-        {
-            id: "4",
-            name: "Laptop Stand",
-            description:
-                "Ergonomic aluminum laptop stand with adjustable height and angle. Improve your posture and workspace comfort.",
-            price: 79.99,
-            image: "/placeholder-product.jpg",
-            category: "Accessories",
-            features: [
-                "Adjustable Height",
-                "Aluminum Build",
-                "Heat Dissipation",
-                "Portable Design",
-            ],
-        },
-    ];
+        const product = productsService.getProduct(id);
 
-    const product = mockProducts.find((p) => p.id === id);
+        if (!product) {
+            return Response.json(
+                { error: "Product not found" },
+                { status: 404 }
+            );
+        }
 
-    if (!product) {
-        return Response.json({ error: "Product not found" }, { status: 404 });
+        // Add features for better display (can be customized per product type)
+        const productWithFeatures = {
+            ...product,
+            features: getProductFeatures(product),
+        };
+
+        return Response.json(productWithFeatures);
+    } catch (error) {
+        console.error("Error fetching product:", error);
+        return Response.json(
+            { error: "Failed to fetch product" },
+            { status: 500 }
+        );
     }
+}
 
-    return Response.json(product);
+// Helper function to generate features based on product category
+function getProductFeatures(product) {
+    const baseFeatures = ["High Quality", "Fast Delivery", "Warranty Included"];
+
+    switch (product.category) {
+        case "Electronics":
+            return [...baseFeatures, "Latest Technology", "Energy Efficient"];
+        case "Wearables":
+            return [...baseFeatures, "Water Resistant", "Long Battery Life"];
+        case "Food & Beverage":
+            return [...baseFeatures, "Organic", "Fresh"];
+        case "Accessories":
+            return [...baseFeatures, "Durable", "Stylish Design"];
+        case "Home & Garden":
+            return [...baseFeatures, "Easy Assembly", "Weather Resistant"];
+        case "Sports & Outdoors":
+            return [...baseFeatures, "Professional Grade", "Safety Tested"];
+        case "Books":
+            return [...baseFeatures, "Educational", "Well Reviewed"];
+        case "Clothing":
+            return [...baseFeatures, "Comfortable Fit", "Premium Materials"];
+        default:
+            return baseFeatures;
+    }
 }

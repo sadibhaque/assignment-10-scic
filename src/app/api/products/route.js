@@ -1,59 +1,45 @@
-// Mock products data
-let products = [
-    {
-        id: "1",
-        name: "Wireless Bluetooth Headphones",
-        description:
-            "High-quality wireless headphones with noise cancellation and 30-hour battery life.",
-        price: 199.99,
-        image: "/placeholder-product.jpg",
-        category: "Electronics",
-    },
-    {
-        id: "2",
-        name: "Smart Fitness Watch",
-        description:
-            "Advanced fitness tracker with heart rate monitoring and GPS functionality.",
-        price: 299.99,
-        image: "/placeholder-product.jpg",
-        category: "Wearables",
-    },
-    {
-        id: "3",
-        name: "Organic Coffee Beans",
-        description:
-            "Premium organic coffee beans sourced from sustainable farms.",
-        price: 24.99,
-        image: "/placeholder-product.jpg",
-        category: "Food & Beverage",
-    },
-    {
-        id: "4",
-        name: "Laptop Stand",
-        description:
-            "Ergonomic aluminum laptop stand with adjustable height and angle.",
-        price: 79.99,
-        image: "/placeholder-product.jpg",
-        category: "Accessories",
-    },
-];
+import productsService from "../../../lib/productsService";
 
 export async function GET() {
-    return Response.json(products);
+    try {
+        const products = productsService.getProducts();
+        return Response.json(products);
+    } catch (error) {
+        console.error("Error fetching products:", error);
+        return Response.json(
+            { error: "Failed to fetch products" },
+            { status: 500 }
+        );
+    }
 }
 
 export async function POST(request) {
     try {
         const body = await request.json();
-        const newProduct = {
-            id: (products.length + 1).toString(),
-            ...body,
-            image: "/placeholder-product.jpg",
-        };
 
-        products.push(newProduct);
+        // Validate required fields
+        if (!body.name || !body.description || !body.price) {
+            return Response.json(
+                { error: "Name, description, and price are required" },
+                { status: 400 }
+            );
+        }
+
+        const newProduct = productsService.addProduct(body);
+
+        if (!newProduct) {
+            return Response.json(
+                { error: "Failed to add product" },
+                { status: 500 }
+            );
+        }
+
         return Response.json(newProduct, { status: 201 });
     } catch (error) {
+        console.error("Error adding product:", error);
         return Response.json({ error: "Invalid request" }, { status: 400 });
     }
 }
+
+// Export products for use in other API routes
+export const products = productsService.getProducts();

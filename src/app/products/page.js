@@ -1,27 +1,68 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import ProductCard from "../../components/ProductCard";
+import LoadingSpinner from "../../components/LoadingSpinner";
+import productsService from "../../lib/productsService";
 
-async function getProducts() {
-    const res = await fetch(
-        `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/products`,
-        {
-            cache: "no-store",
-        }
-    );
-    if (!res.ok) {
-        return [];
+export default function Products() {
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const loadProducts = async () => {
+            try {
+                // First try to get products from localStorage
+                const localProducts = productsService.getProducts();
+                setProducts(localProducts);
+
+                // Optionally, try to sync with API (for future server integration)
+                try {
+                    const response = await fetch("/api/products", {
+                        cache: "no-store",
+                    });
+                    if (response.ok) {
+                        const apiProducts = await response.json();
+                        // You could merge or compare with local products here if needed
+                        console.log(
+                            "API products loaded (for reference):",
+                            apiProducts
+                        );
+                    }
+                } catch (apiError) {
+                    console.warn(
+                        "API not available, using localStorage only:",
+                        apiError
+                    );
+                }
+            } catch (error) {
+                console.error("Error loading products:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadProducts();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex flex-col bg-background">
+                <Navbar />
+                <main className="flex-1 flex items-center justify-center">
+                    <div className="text-center">
+                        <LoadingSpinner className="h-12 w-12 mb-4 mx-auto" />
+                        <p className="text-muted-foreground">
+                            Loading products...
+                        </p>
+                    </div>
+                </main>
+                <Footer />
+            </div>
+        );
     }
-    return res.json();
-}
-
-export const metadata = {
-    title: "Products - MyStore",
-    description: "Browse our amazing collection of products",
-};
-
-export default async function Products() {
-    const products = await getProducts();
 
     return (
         <div className="min-h-screen flex flex-col bg-background">

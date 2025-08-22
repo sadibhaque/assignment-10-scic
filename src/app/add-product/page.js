@@ -24,6 +24,7 @@ import LoadingSpinner from "../../components/LoadingSpinner";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { toast } from "sonner";
+import productsService from "../../lib/productsService";
 
 export default function AddProduct() {
     const [formData, setFormData] = useState({
@@ -31,6 +32,7 @@ export default function AddProduct() {
         description: "",
         price: "",
         category: "Electronics",
+        image: "",
     });
     const [loading, setLoading] = useState(false);
     const router = useRouter();
@@ -77,19 +79,31 @@ export default function AddProduct() {
         setLoading(true);
 
         try {
-            const response = await fetch("/api/products", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    ...formData,
-                    price: parseFloat(formData.price),
-                }),
-            });
+            // Add product to localStorage first
+            const productData = {
+                ...formData,
+                price: parseFloat(formData.price),
+            };
 
-            if (response.ok) {
-                const newProduct = await response.json();
+            const newProduct = productsService.addProduct(productData);
+
+            if (newProduct) {
+                // Also try to sync with the API (optional, for future server sync)
+                try {
+                    await fetch("/api/products", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(productData),
+                    });
+                } catch (apiError) {
+                    console.warn(
+                        "Failed to sync with API, but product is saved locally:",
+                        apiError
+                    );
+                }
+
                 toast.success("Product added successfully!");
 
                 // Reset form
@@ -98,6 +112,7 @@ export default function AddProduct() {
                     description: "",
                     price: "",
                     category: "Electronics",
+                    image: "",
                 });
 
                 // Redirect to products page after a short delay
@@ -105,8 +120,7 @@ export default function AddProduct() {
                     router.push("/products");
                 }, 1500);
             } else {
-                const errorData = await response.json();
-                toast.error(errorData.error || "Failed to add product");
+                toast.error("Failed to add product");
             }
         } catch (error) {
             console.error("Error adding product:", error);
@@ -168,6 +182,25 @@ export default function AddProduct() {
                                         required
                                         className="w-full resize-none"
                                     />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="image">
+                                        Product Image URL
+                                    </Label>
+                                    <Input
+                                        id="image"
+                                        name="image"
+                                        type="url"
+                                        value={formData.image}
+                                        onChange={handleChange}
+                                        placeholder="https://example.com/product-image.jpg"
+                                        className="w-full"
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        Optional: Enter a valid image URL for
+                                        your product
+                                    </p>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

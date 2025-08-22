@@ -1,50 +1,42 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ProductCard from "../components/ProductCard";
+import HeroCarousel from "../components/HeroCarousel";
+import LoadingSpinner from "../components/LoadingSpinner";
 import { Button } from "../components/ui/button";
+import productsService from "../lib/productsService";
 
-async function getProducts() {
-    const res = await fetch(
-        `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/products`,
-        {
-            cache: "no-store",
-        }
-    );
-    if (!res.ok) {
-        return [];
-    }
-    const products = await res.json();
-    return products.slice(0, 3); // Show only first 3 products on homepage
-}
+export default function Home() {
+    const [featuredProducts, setFeaturedProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-export default async function Home() {
-    const featuredProducts = await getProducts();
+    useEffect(() => {
+        const loadProducts = async () => {
+            try {
+                // Get products from localStorage
+                const allProducts = productsService.getProducts();
+                const featured = allProducts.slice(0, 3); // Show only first 3 products on homepage
+                setFeaturedProducts(featured);
+            } catch (error) {
+                console.error("Error loading featured products:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadProducts();
+    }, []);
 
     return (
         <div className="min-h-screen flex flex-col bg-background">
             <Navbar />
 
-            {/* Hero Section */}
-            <section className="bg-gradient-to-br from-background to-muted border-b py-20">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    <h1 className="text-4xl md:text-6xl font-bold mb-6 text-foreground">
-                        Welcome to MyStore
-                    </h1>
-                    <p className="text-xl md:text-2xl mb-8 text-muted-foreground">
-                        Discover amazing products with unbeatable quality and
-                        service
-                    </p>
-                    <div className="space-x-4">
-                        <Button asChild size="lg">
-                            <Link href="/products">Shop Now</Link>
-                        </Button>
-                        <Button asChild variant="outline" size="lg">
-                            <Link href="/login">Sign In</Link>
-                        </Button>
-                    </div>
-                </div>
-            </section>
+            {/* Hero Carousel Section */}
+            <HeroCarousel />
 
             {/* Product Highlights Section */}
             <section className="py-16">
@@ -58,7 +50,14 @@ export default async function Home() {
                         </p>
                     </div>
 
-                    {featuredProducts.length === 0 ? (
+                    {loading ? (
+                        <div className="text-center py-12">
+                            <LoadingSpinner className="h-8 w-8 mb-4 mx-auto" />
+                            <p className="text-muted-foreground">
+                                Loading featured products...
+                            </p>
+                        </div>
+                    ) : featuredProducts.length === 0 ? (
                         <div className="text-center py-12">
                             <p className="text-muted-foreground text-lg">
                                 No products available at the moment.

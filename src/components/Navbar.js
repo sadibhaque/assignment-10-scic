@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -38,7 +39,36 @@ export default function Navbar() {
                                     Add Product
                                 </Link>
                                 <div className="flex items-center space-x-3">
-                                    <div className="flex items-center space-x-2">
+                                    <div className="flex items-center space-x-3">
+                                        {/* User Image */}
+                                        {session.user?.image ? (
+                                            <div className="relative">
+                                                <Image
+                                                    src={session.user.image}
+                                                    alt={
+                                                        session.user?.name ||
+                                                        "User"
+                                                    }
+                                                    width={32}
+                                                    height={32}
+                                                    className="rounded-full border-2 border-border"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center border-2 border-border">
+                                                <span className="text-xs font-medium text-muted-foreground">
+                                                    {(
+                                                        session.user
+                                                            ?.name?.[0] ||
+                                                        session.user
+                                                            ?.email?.[0] ||
+                                                        "U"
+                                                    ).toUpperCase()}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* User Name/Email Badge */}
                                         <Badge
                                             variant="outline"
                                             className="text-xs"
