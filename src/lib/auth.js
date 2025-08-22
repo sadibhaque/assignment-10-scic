@@ -1,101 +1,56 @@
 import bcrypt from "bcryptjs";
-import connectDB from "./mongodb";
-import User from "../models/User";
+
+// In-memory user storage (replace with real database in production)
+let users = [
+    {
+        id: "1",
+        email: "demo@example.com",
+        name: "Demo User",
+        password:
+            "$2a$10$5C7ZJlDj5xVL3PGF0DlH9.nHxXsKnE1Gx7KGNmH0S1hLs9qKjL.i.", // hashed "password"
+        emailVerified: new Date(),
+    },
+];
 
 export async function createUser(email, password, name) {
-    try {
-        await connectDB();
-
-        // Check if user already exists
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            throw new Error("User already exists");
-        }
-
-        // Hash password
-        const hashedPassword = await bcrypt.hash(password, 12);
-
-        // Create new user
-        const newUser = await User.create({
-            email,
-            name,
-            password: hashedPassword,
-            emailVerified: new Date(),
-        });
-
-        // Return user without password
-        const { password: _, ...userWithoutPassword } = newUser.toObject();
-        return userWithoutPassword;
-    } catch (error) {
-        console.error("Error creating user:", error);
-        throw error;
+    // Check if user already exists
+    const existingUser = users.find((user) => user.email === email);
+    if (existingUser) {
+        throw new Error("User already exists");
     }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // Create new user
+    const newUser = {
+        id: (users.length + 1).toString(),
+        email,
+        name,
+        password: hashedPassword,
+        emailVerified: new Date(),
+    };
+
+    users.push(newUser);
+
+    // Return user without password
+    const { password: _, ...userWithoutPassword } = newUser;
+    return userWithoutPassword;
 }
 
 export async function getUserByEmail(email) {
-    try {
-        await connectDB();
-        const user = await User.findOne({ email });
-        return user ? user.toObject() : null;
-    } catch (error) {
-        console.error("Error getting user by email:", error);
-        return null;
-    }
-}
-
-export async function getUserById(id) {
-    try {
-        await connectDB();
-        const user = await User.findById(id);
-        return user ? user.toObject() : null;
-    } catch (error) {
-        console.error("Error getting user by ID:", error);
-        return null;
-    }
+    return users.find((user) => user.email === email);
 }
 
 export async function verifyPassword(password, hashedPassword) {
-    try {
-        return await bcrypt.compare(password, hashedPassword);
-    } catch (error) {
-        console.error("Error verifying password:", error);
-        return false;
-    }
+    return await bcrypt.compare(password, hashedPassword);
 }
 
-// Function to create or update Google OAuth user
-export async function createOrUpdateGoogleUser(profile) {
-    try {
-        await connectDB();
-
-        let user = await User.findOne({ 
-            $or: [
-                { email: profile.email },
-                { googleId: profile.id }
-            ]
-        });
-
-        if (user) {
-            // Update existing user with Google info if needed
-            if (!user.googleId) {
-                user.googleId = profile.id;
-                user.image = profile.image;
-                await user.save();
-            }
-        } else {
-            // Create new user
-            user = await User.create({
-                email: profile.email,
-                name: profile.name,
-                googleId: profile.id,
-                image: profile.image,
-                emailVerified: new Date(),
-            });
-        }
-
-        return user.toObject();
-    } catch (error) {
-        console.error("Error creating/updating Google user:", error);
-        throw error;
+export async function getUserById(id) {
+    const user = users.find((user) => user.id === id);
+    if (user) {
+        const { password: _, ...userWithoutPassword } = user;
+        return userWithoutPassword;
     }
+    return null;
 }

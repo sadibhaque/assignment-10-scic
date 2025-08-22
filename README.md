@@ -22,7 +22,7 @@ A modern e-commerce application built with Next.js 15 (App Router) featuring **r
 - **Products (/products)**: Browse all products with category badges
 - **Product Details (/products/[id])**: Detailed product information
 - **Login/Register (/login, /register)**: Full authentication flow
-- **Protected Dashboard (/dashboard/add-product)**: Add new products (login required)
+- **Add Product (/add-product)**: Add new products (login required)
 
 ## 🚀 Quick Start
 
@@ -93,7 +93,7 @@ For Google authentication, see the detailed setup guide: [GOOGLE_OAUTH_SETUP.md]
 ### Protected Routes (Login Required)
 | Route | Description | Features |
 |-------|-------------|----------|
-| `/dashboard/add-product` | Product management | Form validation, toast notifications |
+| `/add-product` | Product management | Form validation, toast notifications |
 
 ### API Routes
 | Route | Method | Description |
@@ -147,11 +147,11 @@ For Google authentication, see the detailed setup guide: [GOOGLE_OAUTH_SETUP.md]
 1. Visit `/login`
 2. Login with email/password OR Google
 3. Session created and stored
-4. Access to protected dashboard routes
+4. Access to protected routes
 
 ### Adding Products
 1. Login required (automatic redirect if not authenticated)
-2. Visit `/dashboard/add-product`
+2. Visit `/add-product`
 3. Fill product form with validation
 4. Toast notification on success/error
 5. Redirect to products page

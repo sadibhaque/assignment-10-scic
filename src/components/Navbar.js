@@ -32,7 +32,7 @@ export default function Navbar() {
                         {session ? (
                             <>
                                 <Link
-                                    href="/dashboard/add-product"
+                                    href="/add-product"
                                     className="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium transition-colors"
                                 >
                                     Add Product

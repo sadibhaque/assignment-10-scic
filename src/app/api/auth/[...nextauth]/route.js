@@ -5,7 +5,6 @@ import {
     getUserByEmail,
     verifyPassword,
     getUserById,
-    createOrUpdateGoogleUser,
 } from "../../../../lib/auth";
 
 export const authOptions = {
@@ -61,29 +60,19 @@ export const authOptions = {
         error: "/login", // Redirect to login on error
     },
     callbacks: {
-        async signIn({ user, account, profile }) {
-            if (account?.provider === "google") {
-                try {
-                    const dbUser = await createOrUpdateGoogleUser({
-                        id: user.id,
-                        email: user.email,
-                        name: user.name,
-                        image: user.image,
-                    });
-                    user.id = dbUser._id.toString();
-                    return true;
-                } catch (error) {
-                    console.error("Error handling Google sign-in:", error);
-                    return false;
-                }
-            }
-            return true;
-        },
         async jwt({ token, user, account }) {
             if (user) {
-                token.id = user.id || user._id;
+                token.id = user.id;
                 token.email = user.email;
                 token.name = user.name;
+            }
+
+            // Handle Google OAuth
+            if (account?.provider === "google") {
+                token.id = user.id;
+                token.email = user.email;
+                token.name = user.name;
+                // You can create a user in your database here if needed
             }
 
             return token;
