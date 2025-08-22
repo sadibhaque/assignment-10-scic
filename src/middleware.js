@@ -1,4 +1,15 @@
-export { default } from "next-auth/middleware";
+import { withAuth } from "next-auth/middleware";
+
+export default withAuth(
+    function middleware(req) {
+        // This function runs only when the user is authenticated
+    },
+    {
+        callbacks: {
+            authorized: ({ token }) => !!token,
+        },
+    }
+);
 
 export const config = {
     matcher: ["/dashboard/:path*"],
